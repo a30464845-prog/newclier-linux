@@ -1,0 +1,60 @@
+name: Build Newclier Linux v1
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install tools
+        run: |
+          sudo apt update
+          sudo apt install -y debootstrap xorriso syslinux isolinux
+
+      - name: Build rootfs
+        run: |
+          sudo debootstrap noble /tmp/nr http://archive.ubuntu.com/ubuntu
+          sudo mount --bind /dev /tmp/nr/dev
+          sudo mount --bind /proc /tmp/nr/proc
+          sudo mount --bind /sys /tmp/nr/sys
+          sudo chroot /tmp/nr /bin/bash -c "apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends openbox tint2 dillo feh xterm xsetroot network-manager wpasupplicant linux-firmware linux-image-generic initramfs-tools && echo newclier > /etc/hostname && printf 'NEWCLIER LINUX v1.0\nMade by ABDUL REHMAN FAROOQI\n' > /etc/issue && apt-get clean && rm -rf /var/lib/apt/lists/*"
+          sudo umount /tmp/nr/dev
+          sudo umount /tmp/nr/proc
+          sudo umount /tmp/nr/sys
+
+      - name: Add theme + wallpaper + branding
+        run: |
+          sudo mkdir -p /tmp/nr/root/.config/tint2
+          sudo mkdir -p /tmp/nr/root/.config/openbox
+          sudo mkdir -p /tmp/nr/root/wallpapers
+          sudo cp ../win7-wallpaper.jpg /tmp/nr/root/wallpapers/
+          printf 'rounded=0\nborder_width=0\nbackground_color=#002D62 95\nborder_color=#002D62 0\nrounded=0\nborder_width=0\nbackground_color=#3399FF 80\nborder_color=#3399FF 0\nrounded=0\nborder_width=0\nbackground_color=#1A5FAA 80\nborder_color=#1A5FAA 0\npanel_items=LTSCB\npanel_size=100%% 30\npanel_margin=0 0\npanel_padding=2 0 2\npanel_background_id=1\nwm_menu=1\npanel_position=bottom center horizontal\npanel_layer=bottom\npanel_monitor=all\npanel_shrink=0\nautohide=0\nstrut_policy=follow_size\npanel_window_name=tint2\ndisable_transparency=0\nmouse_effects=1\ntask_padding=4 2 4\ntask_background_id=0\ntask_active_background_id=2\ntask_iconified_background_id=3\ntask_centered=1\ntask_text=1\ntask_text_active_color=#FFFFFF\ntask_text_color=#E0E0E0\ntask_icon=1\ntask_icon_size=20\nsystray_padding=2 4 2\nsystray_background_id=0\nsystray_icon_size=16\nclock_font_color=#FFFFFF\nclock_padding=4 0\nclock_background_id=0\nclock_format=%%H:%%M\nlauncher_padding=4 4 4\nlauncher_background_id=0\nlauncher_icon_size=24\n' | sudo tee /tmp/nr/root/.config/tint2/tint2rc > /dev/null
+          printf '#!/bin/sh\nnm-applet &\nfeh --bg-fill /root/wallpapers/win7-wallpaper.jpg &\n(sleep 1 && tint2) &\nexec openbox-session\n' | sudo tee /tmp/nr/root/.config/openbox/autostart > /dev/null
+          sudo chmod +x /tmp/nr/root/.config/openbox/autostart
+          printf '<?xml version="1.0" encoding="UTF-8"?>\n<openbox_menu>\n  <menu id="root-menu" label="Newclier Linux">\n    <menu label="Applications">\n      <item label="Terminal">\n        <action name="Execute"><command>xterm</command></action>\n      </item>\n      <item label="Browser">\n        <action name="Execute"><command>dillo</command></action>\n      </item>\n    </menu>\n    <separator/>\n    <menu label="System">\n      <item label="Reboot">\n        <action name="Execute"><command>reboot</command></action>\n      </item>\n      <item label="Shutdown">\n        <action name="Execute"><command>poweroff</command></action>\n      </item>\n    </menu>\n  </menu>\n</openbox_menu>\n' | sudo tee /tmp/nr/root/.config/openbox/menu.xml > /dev/null
+
+      - name: Prepare boot
+        run: |
+          sudo mkdir -p /tmp/nr/isolinux
+          sudo cp /tmp/nr/boot/vmlinuz-* /tmp/nr/vmlinuz
+          sudo cp /tmp/nr/boot/initrd.img-* /tmp/nr/initrd.img
+          sudo cp /usr/lib/ISOLINUX/isolinux.bin /tmp/nr/isolinux/
+          sudo cp /usr/lib/syslinux/modules/bios/menu.c32 /tmp/nr/isolinux/
+          sudo cp /usr/lib/syslinux/modules/bios/ldlinux.c32 /tmp/nr/isolinux/
+          cp ../oppo-logo.bmp /tmp/nr/isolinux/boot.splash
+          printf 'UI menu.c32\nDEFAULT linux\nPROMPT 0\nTIMEOUT 300\nMENU TITLE Newclier Linux v1.0 - Made by ABDUL REHMAN FAROOQI\nLABEL linux\n  MENU LABEL Newclier Linux v1.0\n  KERNEL /vmlinuz\n  INITRD /initrd.img\n  APPEND initrd=/initrd.img root=/dev/sda auto acpi_osi=\\! acpi_osi=Windows 2012 i915.modeset=1 i915.enable_fbc=0 i915.enable_psr=0 intel_idle.max_cstate=1\n' | sudo tee /tmp/nr/isolinux/isolinux.cfg > /dev/null
+
+      - name: Make ISO
+        run: |
+          sudo xorriso -as mkisofs -o /tmp/newclier-v1.iso -R -J -V "NEWCLIER" -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table /tmp/nr/
+          ls -la /tmp/newclier-v1.iso
+
+      - name: Upload ISO
+        uses: actions/upload-artifact@v4
+        with:
+          name: newclier-linux-v1
+          path: /tmp/newclier-v1.iso   
