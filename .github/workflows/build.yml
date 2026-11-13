@@ -21,7 +21,7 @@ jobs:
           sudo mount --bind /dev /tmp/nr/dev
           sudo mount --bind /proc /tmp/nr/proc
           sudo mount --bind /sys /tmp/nr/sys
-          sudo chroot /tmp/nr /bin/bash -c "apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends openbox tint2 dillo feh xterm xsetroot network-manager wpasupplicant linux-firmware linux-image-generic initramfs-tools && echo newclier > /etc/hostname && printf 'NEWCLIER LINUX v1.0\nMade by ABDUL REHMAN FAROOQI\n' > /etc/issue && apt-get clean && rm -rf /var/lib/apt/lists/*"
+          sudo chroot /tmp/nr /bin/bash -c "sed -i 's/^deb http:\/\/archive.ubuntu.com\/ubuntu noble main/deb http:\/\/archive.ubuntu.com\/ubuntu noble main universe multiverse/' /etc/apt/sources.list && apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends openbox tint2 dillo feh xterm xsetroot network-manager wpasupplicant linux-firmware linux-image-generic initramfs-tools && echo newclier > /etc/hostname && printf 'NEWCLIER LINUX v1.0\nMade by ABDUL REHMAN FAROOQI\n' > /etc/issue && apt-get clean && rm -rf /var/lib/apt/lists/*"
           sudo umount /tmp/nr/dev
           sudo umount /tmp/nr/proc
           sudo umount /tmp/nr/sys
@@ -31,7 +31,7 @@ jobs:
           sudo mkdir -p /tmp/nr/root/.config/tint2
           sudo mkdir -p /tmp/nr/root/.config/openbox
           sudo mkdir -p /tmp/nr/root/wallpapers
-          sudo cp ../win7-wallpaper.jpg /tmp/nr/root/wallpapers/
+          sudo cp win7-wallpaper.jpg /tmp/nr/root/wallpapers/
           printf 'rounded=0\nborder_width=0\nbackground_color=#002D62 95\nborder_color=#002D62 0\nrounded=0\nborder_width=0\nbackground_color=#3399FF 80\nborder_color=#3399FF 0\nrounded=0\nborder_width=0\nbackground_color=#1A5FAA 80\nborder_color=#1A5FAA 0\npanel_items=LTSCB\npanel_size=100%% 30\npanel_margin=0 0\npanel_padding=2 0 2\npanel_background_id=1\nwm_menu=1\npanel_position=bottom center horizontal\npanel_layer=bottom\npanel_monitor=all\npanel_shrink=0\nautohide=0\nstrut_policy=follow_size\npanel_window_name=tint2\ndisable_transparency=0\nmouse_effects=1\ntask_padding=4 2 4\ntask_background_id=0\ntask_active_background_id=2\ntask_iconified_background_id=3\ntask_centered=1\ntask_text=1\ntask_text_active_color=#FFFFFF\ntask_text_color=#E0E0E0\ntask_icon=1\ntask_icon_size=20\nsystray_padding=2 4 2\nsystray_background_id=0\nsystray_icon_size=16\nclock_font_color=#FFFFFF\nclock_padding=4 0\nclock_background_id=0\nclock_format=%%H:%%M\nlauncher_padding=4 4 4\nlauncher_background_id=0\nlauncher_icon_size=24\n' | sudo tee /tmp/nr/root/.config/tint2/tint2rc > /dev/null
           printf '#!/bin/sh\nnm-applet &\nfeh --bg-fill /root/wallpapers/win7-wallpaper.jpg &\n(sleep 1 && tint2) &\nexec openbox-session\n' | sudo tee /tmp/nr/root/.config/openbox/autostart > /dev/null
           sudo chmod +x /tmp/nr/root/.config/openbox/autostart
@@ -45,7 +45,7 @@ jobs:
           sudo cp /usr/lib/ISOLINUX/isolinux.bin /tmp/nr/isolinux/
           sudo cp /usr/lib/syslinux/modules/bios/menu.c32 /tmp/nr/isolinux/
           sudo cp /usr/lib/syslinux/modules/bios/ldlinux.c32 /tmp/nr/isolinux/
-          cp ../oppo-logo.bmp /tmp/nr/isolinux/boot.splash
+          cp oppo-logo.bmp /tmp/nr/isolinux/boot.splash
           printf 'UI menu.c32\nDEFAULT linux\nPROMPT 0\nTIMEOUT 300\nMENU TITLE Newclier Linux v1.0 - Made by ABDUL REHMAN FAROOQI\nLABEL linux\n  MENU LABEL Newclier Linux v1.0\n  KERNEL /vmlinuz\n  INITRD /initrd.img\n  APPEND initrd=/initrd.img root=/dev/sda auto acpi_osi=\\! acpi_osi=Windows 2012 i915.modeset=1 i915.enable_fbc=0 i915.enable_psr=0 intel_idle.max_cstate=1\n' | sudo tee /tmp/nr/isolinux/isolinux.cfg > /dev/null
 
       - name: Make ISO
